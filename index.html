@@ -1,200 +1,1353 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>HA Dongle Flasher — sl-web-tools 风格复刻</title>
+<meta charset="utf-8"/>
+<title>Lincukoo USB-Dongle OTA Update Tool</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>
-/* 仿 sl-web-tools 简洁专业样式 */
-:root{--bg:#0b1220;--panel:#0e1724;--muted:#9aa4b2;--accent:#4488ff;--accent2:#00d1b2}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;color:#e6eef6;background:linear-gradient(180deg,#061226 0%,#02101a 100%);min-height:100vh}
-.container{max-width:1100px;margin:28px auto;padding:18px}
-.header{display:flex;align-items:center;gap:16px}
-.logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#6aa7ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#02101a}
-.title{font-size:18px;margin:0}
-.subtitle{color:var(--muted);font-size:13px;margin-top:4px}
-.layout{display:grid;grid-template-columns:320px 1fr;gap:16px;margin-top:18px}
-.card{background:var(--panel);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
-.sidebar .section{margin-bottom:12px}
-.btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:inherit;cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#02101a;border:none}
-.field{display:flex;gap:8px;align-items:center;margin:8px 0}
-.select, input[type='text']{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-.fw-list{max-height:320px;overflow:auto;border-radius:6px;border:1px dashed rgba(255,255,255,0.02);padding:6px}
-.fw-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:6px}
-.fw-item:hover{background:rgba(255,255,255,0.01)}
-.controls{display:flex;gap:8px}
-.main .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.panel-row{display:flex;gap:12px;margin-top:12px}
-.terminal{background:#000;padding:12px;border-radius:8px;height:320px;overflow:auto;font-family:monospace;font-size:13px;color:#bfe8ff}
-.progress-wrap{margin-top:8px}
-progress{width:100%;height:12px;border-radius:8px}
-.muted{color:var(--muted);font-size:13px}
-.footer{margin-top:12px;color:var(--muted);font-size:13px}
-@media (max-width:960px){.layout{grid-template-columns:1fr}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+     background:#f5f5f5;color:#333;padding:20px;margin:0}
+.container{max-width:800px;margin:auto;background:#fff;border-radius:8px;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+h1{text-align:center;margin-bottom:10px;color:#333;font-size:28px;font-weight:600}
+.firmware-repo{text-align:center;margin-bottom:30px;font-size:14px}
+.firmware-repo a{color:#2196f3;text-decoration:none;transition:color .3s ease}
+.firmware-repo a:hover{color:#1976d2;text-decoration:underline}
+.section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px}
+.section-title{font-size:18px;font-weight:600;color:#333;margin-bottom:15px}
+label{display:block;margin-bottom:8px;color:#333;font-weight:500;font-size:14px}
+select,input[type=file]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#333;font-size:14px;margin-top:8px}
+button{padding:10px 20px;border:none;border-radius:4px;font-size:15px;cursor:pointer;transition:all .3s ease;margin-right:10px;font-weight:500}
+.btn-primary{background:#2196f3;color:#fff}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed}
+.btn-success{background:#4caf50;color:#fff}
+.btn-success:hover{background:#45a049}
+.btn-danger{background:#f44336;color:#fff}
+.btn-danger:hover{background:#da190b}
+.progress-container{margin-top:20px;display:none}
+.progress-bar{width:100%;height:30px;background:#e0e0e0;border-radius:4px;overflow:hidden;position:relative}
+.progress-fill{height:100%;background:#ffc107;width:0%;transition:width .3s;position:absolute;left:0;top:0}
+.progress-text{position:absolute;right:10px;top:0;line-height:30px;color:#333;font-weight:600;z-index:1}
+.status-log{margin-top:20px;height:180px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px;overflow-y:auto;font-family:"Courier New",monospace;font-size:12px;color:#333}
+.log-entry{margin-bottom:6px;word-break:break-all}.log-entry.success{color:#4caf50}.log-entry.error{color:#f44336}.log-entry.info{color:#2196f3}
+input[type=checkbox]{margin-right:5px;cursor:pointer}
+.info-text{color:#666;font-size:13px;margin-top:12px}
+.connection-status{background:#e8f5e9;border:1px solid #4caf50;border-radius:4px;padding:12px;margin-top:12px;color:#2e7d32;font-size:14px}
+.connection-status.error{background:#ffebee;border-color:#f44336;color:#c62828}
+.status-text{margin-bottom:4px}
+.chip-info{font-size:12px;color:#666;margin-top:4px}
+.connection-help{background:#ffebee;border:1px solid #f44336;border-radius:4px;padding:15px;margin-top:12px;color:#c62828}
+.connection-help-title{font-weight:600;font-size:14px;margin-bottom:10px}
+.connection-help-item{margin-top:8px;font-size:13px;line-height:1.5}
+.connection-help-item::before{content:"• ";margin-right:5px}
+.file-info{color:#666;font-size:13px;margin-top:8px}
+.upgrade-status{color:#666;font-size:14px;margin-top:12px}
+.upgrade-status.success{color:#4caf50;font-weight:600;font-size:16px}
+.notice-box{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:15px;margin-top:20px;color:#856404}
+.notice-box::before{content:"⚠ ";font-weight:bold;margin-right:5px}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <div class="logo">sl</div>
-    <div>
-      <h1 class="title">HA Dongle Flasher — sl-web-tools 样式复刻</h1>
-      <div class="subtitle">支持 EFR32MG21 · Gecko Bootloader (.gbl) · WebSerial · XMODEM-1K</div>
+  <h1>Lincukoo USB-Dongle OTA Update Tool</h1>
+  <div class="firmware-repo">
+    <strong>Firmware Repository:</strong> 
+    <a href="https://github.com/lincukoo/USB-Dongle/tree/main/firmware" target="_blank" rel="noopener noreferrer">
+      https://github.com/lincukoo/USB-Dongle/tree/main/firmware
+    </a>
+  </div>
+
+  <!-- Device Connection -->
+  <div class="section">
+    <div class="section-title">Device Connection</div>
+    <div style="margin-top:12px;color:#666;font-size:14px;margin-bottom:15px">
+      Insert your Dongle into an available USB port, then click the Connect button to continue.
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn-success" id="btnConn" onclick="connectPort()">Connect</button>
+      <button class="btn-danger" id="btnDis" onclick="disconnectPort()" style="display:none">Disconnect</button>
+    </div>
+    <div id="connectionStatus" style="display:none" class="connection-status">
+      <div class="status-text" id="portStatusText"></div>
+      <div class="chip-info" id="chipInfo"></div>
+    </div>
+    <div id="connectionHelp" class="connection-help">
+      <div class="connection-help-title">No port connected</div>
+      <div class="connection-help-item">Ensure your device is properly connected to a USB port and recognized by your operating system.</div>
+      <div class="connection-help-item">For Windows/macOS users: Install the Silicon Labs CP2102 Driver to enable device detection.</div>
+      <div class="connection-help-item">Refresh the application or restart your computer if the device remains undetected.</div>
+    </div>
+    <div class="info-text" style="margin-top:8px">
+      Serial port parameters: 115200, 8N1 (fixed)
     </div>
   </div>
 
-  <div class="layout">
-    <div class="sidebar card">
-      <div class="section">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="muted">串口</div>
-          <div id="portState" class="muted">未连接</div>
+  <!-- Select the firmware -->
+  <div class="section">
+    <div class="section-title">Select the firmware</div>
+    <div style="margin-bottom:15px">
+      <label><strong>Option 1: Select from GitHub repository</strong>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <select id="verList" style="flex:1"><option value="">Loading...</option></select>
+          <button type="button" id="btnRefresh" onclick="loadVersions()" style="background:#2196f3;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">Refresh</button>
+          <button type="button" id="btnLatest" onclick="selectLatest()" style="background:#4caf50;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">Latest</button>
         </div>
-        <div class="field" style="margin-top:8px">
-          <button id="btnConnect" class="btn">连接</button>
-          <select id="baud" class="select"><option>115200</option><option>230400</option><option>460800</option></select>
-        </div>
-      </div>
+      </label>
+    </div>
+    <div style="margin-bottom:15px">
+      <label><strong>Option 2: Select from local file</strong>
+        <button type="button" onclick="document.getElementById('fileInput').click()" style="margin-top:8px;background:#2196f3;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer">Choose File</button>
+        <input type="file" id="fileInput" accept=".gbl" style="display:none">
+      </label>
+      <div id="localFileInfo" class="file-info" style="margin-top:8px;display:none">No file selected</div>
+    </div>
+  </div>
 
-      <div class="section">
-        <div class="muted">固件源 (lincukoo/USB-Dongle · firmware/Dongle-MG21)</div>
-        <div class="field" style="margin-top:8px">
-          <input id="fwUrl" class="select" placeholder="固件 URL（优先于本地）"/>
-        </div>
-        <div class="field">
-          <input id="fwFile" type="file" accept=".gbl,.bin"/>
-        </div>
-        <div class="field controls">
-          <button id="btnRefresh" class="btn">刷新</button>
-          <button id="btnLatest" class="btn">选最新</button>
-          <button id="btnAutoBoot" class="btn">尝试 RTS/DTR</button>
-        </div>
-        <div class="fw-list" id="fwList"></div>
-      </div>
-
-      <div class="section">
-        <div class="muted">高级</div>
-        <div style="margin-top:8px" class="field">
-          <label class="muted" style="width:100px">重试次数</label>
-          <input id="retry" type="text" value="8" style="width:60px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit"/>
-        </div>
+  <!-- Start Upgrade -->
+  <div class="section">
+    <div class="section-title">Start Upgrade</div>
+    <div style="margin-top:12px">
+      <button class="btn-success" id="btnUpd" onclick="startUpdate()" disabled>Flash</button>
+      <button class="btn-danger" id="btnCan" onclick="cancelUpdate()" style="display:none">Cancel</button>
+    </div>
+    <div class="progress-container" id="progBox" style="margin-top:20px">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progBar"></div>
+        <div class="progress-text" id="progText">0%</div>
       </div>
     </div>
+    <div class="upgrade-status" id="upgradeStatus">Ready to start upgrade</div>
+  </div>
 
-    <div class="main">
-      <div class="card">
-        <div class="top">
-          <div style="display:flex;gap:8px;align-items:center">
-            <button id="btnFlash" class="btn primary" disabled>开始刷机</button>
-            <div class="muted">选择固件后启用</div>
-          </div>
-          <div class="muted">传输: XMODEM-1K (CRC)</div>
-        </div>
 
-        <div class="panel-row">
-          <div style="flex:1">
-            <div class="muted">进度</div>
-            <div class="progress-wrap"><progress id="progress" value="0" max="100"></progress></div>
-            <div style="height:10px"></div>
-            <div class="muted">终端日志</div>
-            <div id="terminal" class="terminal"></div>
-          </div>
-        </div>
-
-        <div class="footer">说明：先把 Dongle 置入 Gecko Bootloader（按住 BOOT 并上电），或使用 RTS/DTR 自动（需连线）。不要在刷机过程中拔掉设备。</div>
-      </div>
+  <!-- Status Log -->
+  <div class="section">
+    <div class="section-title">Status Log
+      <label style="float:right;font-size:13px;font-weight:normal;margin:0">
+        <input type="checkbox" id="debugMode">Serial Debug Mode
+      </label>
     </div>
+    <div class="status-log" id="logBox"></div>
+  </div>
+
+  <!-- Important Notice -->
+  <div class="notice-box">
+    <strong>Important Notice:</strong> After completing an OTA update on this page, you must refresh the webpage to perform a second firmware upgrade.
   </div>
 </div>
 
 <script>
-/* 复刻 sl-web-tools 的行为：
-   - 自动拉取 GitHub 固件列表
-   - 支持选择本地文件或 URL
-   - WebSerial 连接
-   - XMODEM-1K 发送实现
-*/
+/* ========== 配置 ========== */
+// GitHub固件仓库地址（参考ref实现）
+const GITHUB_API = 'https://api.github.com/repos/lincukoo/USB-Dongle/contents/firmware/Dongle-MG21';
 
-const API = 'https://api.github.com/repos/lincukoo/USB-Dongle/contents/firmware/Dongle-MG21';
-const fwListEl = document.getElementById('fwList');
-const terminal = document.getElementById('terminal');
-const btnRefresh = document.getElementById('btnRefresh');
-const btnConnect = document.getElementById('btnConnect');
-const btnFlash = document.getElementById('btnFlash');
-const btnLatest = document.getElementById('btnLatest');
-const btnAutoBoot = document.getElementById('btnAutoBoot');
-const portState = document.getElementById('portState');
-const progress = document.getElementById('progress');
-const fwUrlInput = document.getElementById('fwUrl');
-const fwFileInput = document.getElementById('fwFile');
-const baudSelect = document.getElementById('baud');
+/* ========== 全局变量 ========== */
+let port = null;
+let reader = null;
+let writer = null;
+let updating = false;
+let cnt = 0;
+let firmwareBytes = null;        // 本地文件数据
+let firmwareFileName = '';
+let githubFirmwareUrl = null;    // GitHub文件URL
 
-let port=null, writer=null, reader=null, firmwareFiles=[];
-
-function term(msg){ terminal.textContent += msg + '\n'; terminal.scrollTop = terminal.scrollHeight; }
-function shortName(n){ return n.length>36 ? n.slice(0,20)+'...'+n.slice(-12) : n }
-
-async function fetchList(){
-  fwListEl.innerHTML = '<div class="muted">加载中…</div>';
-  try{
-    const r = await fetch(API);
-    if(!r.ok) throw new Error(r.status);
-    const data = await r.json();
-    firmwareFiles = data.filter(f => f.name && (f.name.endsWith('.gbl')||f.name.endsWith('.bin')))
-      .map(f => ({name:f.name, url:f.download_url, size:f.size, sha:f.sha}))
-      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-    renderList(); term('固件列表加载完毕: '+ firmwareFiles.length);
-  }catch(e){ fwListEl.innerHTML = '<div class="muted">拉取失败</div>'; term('获取固件列表失败: '+e); }
+/* ========== 日志 ========== */
+function log(msg, type = 'info') {
+  const box = document.getElementById('logBox');
+  const line = document.createElement('div');
+  line.className = 'log-entry ' + type;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
 }
-function renderList(){ fwListEl.innerHTML = ''; if(!firmwareFiles.length){ fwListEl.innerHTML='<div class="muted">无固件</div>'; return; } firmwareFiles.forEach((f,idx)=>{ const el=document.createElement('div'); el.className='fw-item'; el.innerHTML = `<div><div style="font-weight:600">${shortName(f.name)}</div><div class="muted">${(f.size/1024).toFixed(1)} KB</div></div>`; const r=document.createElement('div'); const btn=document.createElement('button'); btn.textContent='选择'; btn.onclick = ()=>{ fwUrlInput.value=f.url; Array.from(fwListEl.children).forEach(c=>c.style.background=''); el.style.background='rgba(255,255,255,0.02)'; btnFlash.disabled=false; term('选择: '+f.name); }; r.appendChild(btn); el.appendChild(r); fwListEl.appendChild(el); }); }
 
-btnRefresh.onclick = fetchList; btnLatest.onclick = ()=>{ if(firmwareFiles.length) { const last = firmwareFiles[firmwareFiles.length-1]; fwUrlInput.value = last.url; term('已选择最新: '+ last.name); btnFlash.disabled=false; } };
+function logRawData(data, prefix = '') {
+  const isDebugMode = document.getElementById('debugMode')?.checked || false;
+  if (!isDebugMode) return;
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(data);
+  const printable = text.replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
+  if (printable.trim().length > 0) {
+    log(`${prefix}${printable}`, 'info');
+  }
+}
 
-btnConnect.onclick = async ()=>{
-  try{
-    port = await navigator.serial.requestPort();
-    const baud = parseInt(baudSelect.value||'115200');
-    await port.open({ baudRate: baud });
-    writer = port.writable.getWriter();
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function updateProgress(p) {
+  const bar = document.getElementById('progBar');
+  const text = document.getElementById('progText');
+  bar.style.width = p + '%';
+  if (text) text.textContent = p + '%';
+}
+
+/* ========== GitHub 版本列表 ========== */
+let firmwareFiles = []; // 存储固件列表数据
+
+async function loadVersions() {
+  const sel = document.getElementById('verList');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  try {
+    log(`Fetching firmware list from: ${GITHUB_API}`, 'info');
+    const r = await fetch(GITHUB_API);
+    
+    if (!r.ok) {
+      let errorText = '';
+      try {
+        const errorData = await r.json();
+        errorText = errorData.message || JSON.stringify(errorData);
+      } catch (e) {
+        errorText = await r.text();
+      }
+      log(`GitHub API error: HTTP ${r.status} - ${errorText}`, 'error');
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    }
+    
+    const data = await r.json();
+    log(`GitHub API response received, type: ${typeof data}, isArray: ${Array.isArray(data)}`, 'info');
+    
+    // 检查响应格式（参考ref实现）
+    if (!Array.isArray(data)) {
+      log(`Invalid GitHub API response format: expected array, got ${typeof data}. Response: ${JSON.stringify(data).substring(0, 200)}`, 'error');
+      throw new Error('Invalid response format: expected array');
+    }
+    
+    log(`Found ${data.length} items in GitHub repository`, 'info');
+    
+    // 过滤并排序固件文件（参考ref实现）
+    firmwareFiles = data.filter(f => f.name && (f.name.endsWith('.gbl') || f.name.endsWith('.bin')))
+      .map(f => ({
+        name: f.name,
+        url: f.download_url,
+        size: f.size,
+        sha: f.sha
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    
+    log(`Filtered to ${firmwareFiles.length} firmware files`, 'info');
+    
+    if (firmwareFiles.length === 0) {
+      log('No firmware files found in GitHub repository', 'warning');
+      sel.innerHTML = '<option value="">No firmware files</option>';
+      return;
+    }
+    
+    sel.innerHTML = '<option value="">Please select version</option>';
+    firmwareFiles.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.url;
+      const sizeText = f.size ? ` (${(f.size / 1024).toFixed(1)} KB)` : '';
+      opt.textContent = f.name + sizeText;
+      opt.dataset.size = f.size;
+      opt.dataset.name = f.name; // 存储原始文件名，方便后续使用
+      sel.appendChild(opt);
+    });
+    log(`Firmware list loaded successfully: ${firmwareFiles.length} files`, 'success');
+  } catch (e) {
+    log(`Failed to load GitHub firmware list: ${e.message}`, 'error');
+    if (e.stack) {
+      log(`Error stack: ${e.stack.split('\n')[0]}`, 'error');
+    }
+    sel.innerHTML = '<option value="">Load failed</option>';
+    firmwareFiles = [];
+  }
+}
+
+// 选择最新固件（参考ref实现）
+async function selectLatest() {
+  if (firmwareFiles.length === 0) {
+    log('No firmware files available, please refresh first', 'warning');
+    return;
+  }
+  const latest = firmwareFiles[firmwareFiles.length - 1];
+  const sel = document.getElementById('verList');
+  
+  // 直接设置值并更新相关变量（不依赖change事件）
+  sel.value = latest.url;
+  firmwareFileName = latest.name;
+  githubFirmwareUrl = latest.url;
+  document.getElementById('fileInput').value = '';
+  
+  // 立即下载GitHub文件到内存（避免在升级模式中下载导致超时）
+  firmwareBytes = null;
+  const fileInfo = document.getElementById('localFileInfo');
+  if (fileInfo) {
+    fileInfo.style.display = 'block';
+    const sizeText = latest.size ? ` (${(latest.size / 1024).toFixed(2)} KB)` : '';
+    fileInfo.textContent = `Downloading: ${latest.name}${sizeText}...`;
+  }
+  
+  log(`Selected latest firmware: ${latest.name}${latest.size ? ` (${(latest.size / 1024).toFixed(2)} KB)` : ''}`, 'info');
+  log(`Downloading firmware from GitHub...`, 'info');
+  
+  try {
+    const response = await fetch(latest.url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    
+    const ab = await response.arrayBuffer();
+    firmwareBytes = new Uint8Array(ab);
+    log(`Firmware downloaded successfully: ${latest.name} (${firmwareBytes.length} bytes, ${(firmwareBytes.length / 1024).toFixed(2)} KB)`, 'success');
+    
+    if (fileInfo) {
+      const sizeText = latest.size ? ` (${(latest.size / 1024).toFixed(2)} KB)` : '';
+      fileInfo.textContent = `Selected: ${latest.name}${sizeText}`;
+    }
+    
+    // 启用Flash按钮
+    document.getElementById('btnUpd').disabled = false;
+  } catch (error) {
+    log(`Failed to download firmware: ${error.message}`, 'error');
+    firmwareBytes = null;
+    firmwareFileName = '';
+    githubFirmwareUrl = null;
+    if (fileInfo) {
+      fileInfo.textContent = 'Download failed';
+    }
+    document.getElementById('btnUpd').disabled = true;
+  }
+}
+
+document.getElementById('verList').addEventListener('change', async e => {
+  const url = e.target.value;
+  if (!url) {
+    firmwareBytes = null;
+    firmwareFileName = '';
+    githubFirmwareUrl = null;
+    document.getElementById('fileInput').value = '';
+    const fileInfo = document.getElementById('localFileInfo');
+    if (fileInfo) {
+      fileInfo.style.display = 'block';
+      fileInfo.textContent = 'No file selected';
+    }
+    document.getElementById('btnUpd').disabled = true;
+    return;
+  }
+  
+  // 从dataset获取原始文件名（不包含大小信息）
+  const selectedOption = e.target.selectedOptions[0];
+  const fileName = selectedOption.dataset.name || selectedOption.text.split(' (')[0]; // 如果没有dataset.name，从text中提取
+  const fileSize = selectedOption.dataset.size;
+  
+  firmwareFileName = fileName; // 使用原始文件名，不包含大小
+  githubFirmwareUrl = url;
+  document.getElementById('fileInput').value = '';
+  
+  // 立即下载GitHub文件到内存（避免在升级模式中下载导致超时）
+  firmwareBytes = null;
+  const fileInfo = document.getElementById('localFileInfo');
+  if (fileInfo) {
+    fileInfo.style.display = 'block';
+    const sizeText = fileSize ? ` (${(parseInt(fileSize) / 1024).toFixed(2)} KB)` : '';
+    fileInfo.textContent = `Downloading: ${fileName}${sizeText}...`;
+  }
+  log(`Firmware selected: ${fileName}${fileSize ? ` (${(parseInt(fileSize) / 1024).toFixed(2)} KB)` : ''}`, 'info');
+  log(`Downloading firmware from GitHub...`, 'info');
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    
+    const ab = await response.arrayBuffer();
+    firmwareBytes = new Uint8Array(ab);
+    log(`Firmware downloaded successfully: ${fileName} (${firmwareBytes.length} bytes, ${(firmwareBytes.length / 1024).toFixed(2)} KB)`, 'success');
+    
+    if (fileInfo) {
+      const sizeText = fileSize ? ` (${(parseInt(fileSize) / 1024).toFixed(2)} KB)` : '';
+      fileInfo.textContent = `Selected: ${fileName}${sizeText}`;
+    }
+    
+    // 选择固件后启用按钮（升级时会检查串口是否连接）
+    document.getElementById('btnUpd').disabled = false;
+  } catch (error) {
+    log(`Failed to download firmware: ${error.message}`, 'error');
+    firmwareBytes = null;
+    firmwareFileName = '';
+    githubFirmwareUrl = null;
+    if (fileInfo) {
+      fileInfo.textContent = 'Download failed';
+    }
+    document.getElementById('btnUpd').disabled = true;
+  }
+});
+
+/* ========== 本地文件选择 ========== */
+document.getElementById('fileInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) {
+    firmwareBytes = null;
+    firmwareFileName = '';
+    const fileInfo = document.getElementById('localFileInfo');
+    if (fileInfo) {
+      fileInfo.style.display = 'block';
+      fileInfo.textContent = 'No file selected';
+    }
+    document.getElementById('btnUpd').disabled = true;
+    return;
+  }
+  if (!file.name.endsWith('.gbl')) {
+    log('Please select a .gbl format firmware file', 'error');
+    e.target.value = '';
+    return;
+  }
+  log(`Reading local file ${file.name} ...`);
+  try {
+    const ab = await file.arrayBuffer();
+    firmwareBytes = new Uint8Array(ab);
+    firmwareFileName = file.name;
+    githubFirmwareUrl = null;
+    document.getElementById('verList').value = '';
+    const fileInfo = document.getElementById('localFileInfo');
+    if (fileInfo) {
+      fileInfo.style.display = 'block';
+      fileInfo.textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+    }
+    log(`File read complete (${firmwareBytes.length} bytes)`, 'success');
+    document.getElementById('btnUpd').disabled = !port;
+  } catch (e) {
+    log('File read failed: ' + e.message, 'error');
+    firmwareBytes = null;
+    firmwareFileName = '';
+    githubFirmwareUrl = null;
+  }
+});
+
+/* ========== 串口 ========== */
+let portWatcher = null; // 串口监听器
+let knownPorts = new Set(); // 已知的串口集合
+
+// 启动串口监听（监听串口断开）
+function startPortWatcher() {
+  if (!('serial' in navigator)) return;
+  
+  try {
+    if (navigator.serial.addEventListener) {
+      // 监听串口断开事件
+      navigator.serial.addEventListener('disconnect', async (event) => {
+        // 如果当前连接的串口断开了，自动断开连接并清理状态
+        if (port && event.target === port) {
+          log('Serial port disconnected, cleaning up...', 'warning');
+          await handlePortDisconnect();
+        }
+      });
+    }
+  } catch (error) {
+    // 忽略错误
+  }
+}
+
+async function connectPort() {
+  // 如果已连接，不允许重复连接
+  if (port) {
+    log('Serial port already connected, please disconnect first', 'warning');
+    return;
+  }
+  
+  if (!('serial' in navigator)) {
+    log('Please use Chrome/Edge 89+', 'error');
+    return;
+  }
+  
+  try {
+    // 直接弹出选择窗口
+    const selectedPort = await navigator.serial.requestPort({
+      filters: [] // 显示所有可用串口
+    });
+    
+    port = selectedPort;
+  
+  // 固定串口参数：115200, 8N1
+  await port.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none' });
+  writer = port.writable.getWriter();
+  reader = port.readable.getReader();
+  
+    log('Serial port connected (115200, 8N1)', 'success');
+    
+    const statusBox = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('portStatusText');
+    const helpBox = document.getElementById('connectionHelp');
+    if (statusBox && statusText) {
+      statusBox.style.display = 'block';
+      statusBox.className = 'connection-status';
+      statusText.textContent = 'Port connected';
+      const chipInfo = document.getElementById('chipInfo');
+      if (chipInfo) chipInfo.textContent = '';
+    }
+    if (helpBox) {
+      helpBox.style.display = 'none';
+    }
+    
+    document.getElementById('btnConn').style.display = 'none';
+    document.getElementById('btnDis').style.display = 'inline-block';
+    document.getElementById('btnUpd').disabled = !firmwareBytes && !githubFirmwareUrl;
+    
+  } catch (error) {
+    if (error.name === 'NotFoundError') {
+      log('No serial port selected', 'error');
+    } else if (error.name === 'SecurityError') {
+      log('Serial port access denied', 'error');
+    } else if (error.name === 'AbortError') {
+      log('User cancelled serial port selection', 'info');
+    } else {
+      log(`Failed to connect serial port: ${error.message}`, 'error');
+    }
+    
+    // 清理状态
+    port = null;
+    writer = null;
+    reader = null;
+    const statusBox = document.getElementById('connectionStatus');
+    const helpBox = document.getElementById('connectionHelp');
+    if (statusBox) {
+      statusBox.style.display = 'none';
+    }
+    if (helpBox) {
+      helpBox.style.display = 'block';
+    }
+  }
+}
+
+// 处理串口断开（统一处理函数）
+async function handlePortDisconnect() {
+  updating = false;
+  
+  log('Serial port disconnected detected, cleaning connection state...', 'warning');
+  
+  // 清理reader
+  if (reader) {
+    try {
+      await reader.cancel();
+      await reader.releaseLock();
+    } catch (e) {
+      // 忽略错误
+    }
+    reader = null;
+  }
+  
+  // 清理writer
+  if (writer) {
+    try {
+      await writer.close();
+      await writer.releaseLock();
+    } catch (e) {
+      // 忽略错误
+    }
+    writer = null;
+  }
+  
+  // 清理port
+  if (port) {
+    try {
+      await port.close();
+    } catch (e) {
+      // 忽略错误
+    }
+    port = null;
+  }
+  
+  // 更新UI状态
+  const statusBox = document.getElementById('connectionStatus');
+  const helpBox = document.getElementById('connectionHelp');
+  if (statusBox) {
+    statusBox.style.display = 'none';
+  }
+  if (helpBox) {
+    helpBox.style.display = 'block';
+  }
+  
+  document.getElementById('btnConn').style.display = 'inline-block';
+  document.getElementById('btnDis').style.display = 'none';
+  document.getElementById('btnUpd').disabled = true;
+  document.getElementById('btnCan').style.display = 'none';
+  document.getElementById('progBox').style.display = 'none';
+  
+  log('Serial port connection cleared, please reconnect', 'warning');
+}
+
+async function disconnectPort() {
+  updating = false;
+  
+  log('Disconnecting serial port...', 'info');
+  
+  // 先取消所有读取操作
+  if (reader) {
+    try {
+    await reader.cancel();
+      await reader.releaseLock();
+    } catch (e) {
+      // 忽略错误
+    }
+    reader = null;
+  }
+  
+  // 关闭写入器
+  if (writer) {
+    try {
+    await writer.close();
+      await writer.releaseLock();
+    } catch (e) {
+      // 忽略错误
+    }
+    writer = null;
+  }
+  
+  // 关闭串口（这会释放串口占用，使其重新出现在选择列表中）
+  if (port) {
+    try {
+    await port.close();
+      log('Serial port closed, resources released', 'success');
+    } catch (e) {
+      // 忽略错误
+    }
+    port = null;
+  }
+  
+  log('Serial port disconnected, resources released, can reconnect', 'success');
+  const statusBox = document.getElementById('connectionStatus');
+  const helpBox = document.getElementById('connectionHelp');
+  if (statusBox) {
+    statusBox.style.display = 'none';
+  }
+  if (helpBox) {
+    helpBox.style.display = 'block';
+  }
+  
+  document.getElementById('btnConn').style.display = 'inline-block';
+  document.getElementById('btnDis').style.display = 'none';
+  document.getElementById('btnUpd').disabled = true;
+  document.getElementById('btnCan').style.display = 'none';
+  document.getElementById('progBox').style.display = 'none';
+}
+
+/* ========== 升级流程：进入升级模式 ========== */
+async function enterUpgradeMode() {
+  const startTime = Date.now();
+  const timeout = 5 * 60 * 1000; // 5分钟超时
+  let receivedData = '';
+  let uploadGblDetected = false;
+  
+  log('Sending "1\\r\\n" command, waiting for "begin upload"...', 'info');
+  
+  // 确保reader可用
+  if (!reader) {
+    if (!port || !port.readable) {
+      throw new Error('Serial port not readable, cannot enter upgrade mode');
+    }
     reader = port.readable.getReader();
-    portState.textContent = '已连接 ('+baud+')'; term('串口打开');
-  }catch(e){ term('打开串口失败: '+e); }
+  }
+  
+  while (Date.now() - startTime < timeout && updating) {
+    // 如果还没检测到"begin upload"，发送"1\r\n"
+    if (!uploadGblDetected) {
+      try {
+        const cmd = new TextEncoder().encode('1\r\n');
+        await writer.write(cmd);
+        logRawData(cmd, '[发送] ');
+        // 等待一小段时间，让设备有时间响应
+        await delay(100);
+      } catch (e) {
+        log(`Send failed: ${e.message}`, 'error');
+        throw e;
+      }
+    }
+    
+    // 持续读取串口数据，等待响应
+    const checkStart = Date.now();
+    let hasReceivedData = false;
+    
+    while (Date.now() - checkStart < 2000 && updating) {
+      try {
+        const { value, done } = await Promise.race([
+          reader.read(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+        ]);
+        
+        if (done) {
+          // 尝试重新获取reader
+          if (port && port.readable) {
+            reader = port.readable.getReader();
+          } else {
+            throw new Error('Serial port reading ended and cannot re-acquire reader');
+          }
+          continue;
+        }
+        
+        if (value && value.length > 0) {
+          hasReceivedData = true;
+          logRawData(value, '[接收] ');
+          const text = new TextDecoder('utf-8', { fatal: false }).decode(value);
+          receivedData += text;
+          
+          // 第一步：检测"begin upload"（不区分大小写）
+          const lowerData = receivedData.toLowerCase();
+          if (lowerData.includes('begin upload') || lowerData.includes('beginupload')) {
+            uploadGblDetected = true;
+            log('✓ Detected "begin upload", waiting 2 seconds before entering XModem transfer...', 'success');
+            // 等待2秒，让设备准备就绪
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            // 返回，停止所有串口发送，进入XModem传输
+            return true;
+          }
+        }
+      } catch (e) {
+        if (e.message === 'timeout') {
+          // 超时是正常的，继续等待
+          continue;
+        } else if (!e.message.includes('cancel')) {
+          log(`Reading error: ${e.message}`, 'error');
+          // 如果是其他错误，尝试继续
+        }
+      }
+    }
+    
+    // 2秒内没检测到"begin upload"
+    if (!hasReceivedData) {
+      log('No data received within 2 seconds, resending "1\\r\\n"...', 'warning');
+    } else {
+      log(`"begin upload" not detected within 2 seconds (data received but not matched), resending "1\\r\\n"...`, 'info');
+      // 保留部分数据，但限制长度避免无限增长
+      if (receivedData.length > 1000) {
+        receivedData = receivedData.slice(-500);
+      }
+    }
+  }
+  
+  // 超时
+  if (!uploadGblDetected) {
+    throw new Error('"begin upload" not detected within 5 minutes, upgrade failed. Last received data: ' + (receivedData || 'none'));
+  } else {
+    throw new Error('Detected "begin upload" but did not receive XModem start signal, upgrade failed');
+  }
+}
+
+/* ========== XModem 协议 ========== */
+const SOH = 0x01, EOT = 0x04, ACK = 0x06, NAK = 0x15, CAN = 0x18, CTRL_C = 0x03, CMD_C = 0x43;
+
+// Bootloader CRC16计算函数（设备专用算法）
+// 完全按照C代码实现，确保每一步都与bootloader一致
+function btl_crc16(newByte, prevResult) {
+  // 第1步：字节交换 (prevResult >> 8) | (prevResult << 8)
+  // 在C中，uint16_t左移8位会自动截断到16位
+  // 高8位移到低8位，低8位移到高8位
+  prevResult = ((prevResult >>> 8) | ((prevResult & 0xFF) << 8)) & 0xFFFF;
+  
+  // 第2步：与输入字节异或
+  prevResult = (prevResult ^ newByte) & 0xFFFF;
+  
+  // 第3步：与低字节右移4位异或 (prevResult & 0xff) >> 4
+  prevResult = (prevResult ^ ((prevResult & 0xff) >>> 4)) & 0xFFFF;
+  
+  // 第4步：与高字节左移4位异或 (prevResult << 8) << 4
+  // 在C中：(prevResult << 8) 将低8位移到高8位，然后 << 4 再左移4位
+  // 相当于：低8位左移4位后放到高8位，低4位变成0
+  // 在JavaScript中需要确保16位截断
+  const temp = (prevResult << 8) & 0xFFFF;  // 低8位移到高8位
+  prevResult = (prevResult ^ ((temp << 4) & 0xFFFF)) & 0xFFFF;
+  
+  // 第5步：复杂的位操作
+  // ((uint8_t) ((uint8_t) ((uint8_t) (prevResult & 0xff)) << 5))
+  // | ((uint16_t) ((uint8_t) ((uint8_t) (prevResult & 0xff)) >> 3) << 8)
+  const lowByte = prevResult & 0xff;
+  // part1: 低字节左移5位，然后截断到8位
+  const part1 = ((lowByte << 5) & 0xff);
+  // part2: 低字节右移3位，然后左移8位（放到高8位），截断到16位
+  const part2 = (((lowByte >>> 3) & 0xff) << 8) & 0xFFFF;
+  prevResult = (prevResult ^ (part1 | part2)) & 0xFFFF;
+  
+  return prevResult & 0xFFFF;
+}
+
+// 计算整个缓冲区的CRC16
+function btl_crc16Stream(buffer, prevResult = 0) {
+  let result = prevResult;
+  for (let i = 0; i < buffer.length; i++) {
+    result = btl_crc16(buffer[i], result);
+  }
+  return result;
+}
+
+async function writePacket(n, dat) {
+  // XModem-CRC数据包格式：SOH + 包序号 + 包序号补码 + 128字节数据 + CRC16(2字节)
+  // 确保数据包正好是128字节
+  if (dat.length !== 128) {
+    throw new Error(`数据包大小错误：期望128字节，实际${dat.length}字节`);
+  }
+  
+  const packetNum = n & 0xff;
+  const packetNumComplement = (0xff - packetNum) & 0xff;
+  
+  // 验证包序号和补码
+  if ((packetNum + packetNumComplement) & 0xff !== 0xff) {
+    throw new Error(`包序号补码错误：包序号=${packetNum}, 补码=${packetNumComplement}`);
+  }
+  
+  const head = new Uint8Array([SOH, packetNum, packetNumComplement]);
+  
+  // 计算CRC16：对128字节数据计算CRC16（使用设备专用算法）
+  const crc16 = btl_crc16Stream(dat, 0);
+  const crcHigh = (crc16 >> 8) & 0xff;  // CRC高字节
+  const crcLow = crc16 & 0xff;           // CRC低字节
+  
+  // 构建完整数据包：3字节头部 + 128字节数据 + 2字节CRC16 = 133字节
+  const pkt = new Uint8Array(133);
+  pkt.set(head, 0);
+  pkt.set(dat, 3);
+  pkt[131] = crcHigh;
+  pkt[132] = crcLow;
+  
+  // 验证数据包格式
+  if (pkt[0] !== SOH) {
+    throw new Error(`数据包格式错误：第一个字节应该是SOH(0x01)，实际是0x${pkt[0].toString(16).padStart(2, '0')}`);
+  }
+  if (pkt[1] !== packetNum) {
+    throw new Error(`数据包格式错误：包序号不匹配`);
+  }
+  if (pkt[2] !== packetNumComplement) {
+    throw new Error(`数据包格式错误：包序号补码不匹配`);
+  }
+  // 验证数据包格式：SOH + 包序号 + 补码 + 128字节数据 + 2字节CRC16 = 133字节
+  if (pkt.length !== 133) {
+    throw new Error(`数据包长度错误：期望133字节，实际${pkt.length}字节`);
+  }
+  if (pkt[0] !== SOH) {
+    throw new Error(`数据包格式错误：第一个字节应该是SOH(0x01)，实际是0x${pkt[0].toString(16).padStart(2, '0')}`);
+  }
+  if (pkt[1] !== packetNum) {
+    throw new Error(`数据包格式错误：包序号不匹配，期望${packetNum}，实际${pkt[1]}`);
+  }
+  if (pkt[2] !== packetNumComplement) {
+    throw new Error(`数据包格式错误：包序号补码不匹配，期望${packetNumComplement}，实际${pkt[2]}`);
+  }
+  
+  // 确保一次性发送完整数据包（133字节）
+  // 在发送前再次验证第一个字节
+  if (pkt[0] !== 0x01) {
+    throw new Error(`发送前验证失败：数据包第一个字节不是0x01，实际是0x${pkt[0].toString(16).padStart(2, '0')}`);
+  }
+  
+  // 确保writer准备好，然后一次性写入完整数据包
+  await writer.ready;
+  
+  // 一次性写入完整数据包（133字节）
+  // 注意：Web Serial API的writer.write()可能不是原子操作，
+  // 底层驱动可能会将大数据包分片发送，这是底层行为，应用层无法完全控制
+  // 使用强制刷新机制确保数据包完整发送
+  await writer.write(pkt);
+  
+  // 强制刷新：关闭writer并重新获取，这样可以强制底层驱动刷新缓冲区
+  // 这是确保数据包完整发送的最可靠方法
+  // 关闭writer会强制所有待发送的数据立即刷新到硬件
+  await writer.close();
+  writer = port.writable.getWriter();
+  
+  // 等待writer准备好，确保新的writer已初始化
+  await writer.ready;
+  
+  // 验证数据包已发送（通过检查pkt数组，确保没有被修改）
+  if (pkt[0] !== SOH) {
+    throw new Error(`发送后验证失败：数据包第一个字节被修改，应该是SOH(0x01)，实际是0x${pkt[0].toString(16).padStart(2, '0')}`);
+  }
+  
+  // 数据包已发送，等待ACK（不打印详细日志，避免日志过多）
+}
+
+async function sendEOT() {
+  log('Sending EOT signal (0x04)...', 'info');
+  
+  // 确保writer准备好
+  await writer.ready;
+  
+  // 发送 EOT (0x04) 信号，表示传输结束
+  await writer.write(new Uint8Array([EOT]));
+  
+  // 强制刷新：关闭writer并重新获取，确保EOT信号立即发送
+  await writer.close();
+  writer = port.writable.getWriter();
+  await writer.ready;
+  
+  // 等待一小段时间，确保 bootloader 处理完成
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // 发送重启指令 '2\r\n'
+  log('Sending restart command "2\\r\\n"...', 'info');
+  await writer.ready;
+  await writer.write(new Uint8Array([0x32, 0x0D, 0x0A]));
+  
+  // 强制刷新重启指令
+  await writer.close();
+  writer = port.writable.getWriter();
+  await writer.ready;
+}
+
+// 从内存数据发送（本地文件）
+async function sendXModem(data) {
+  const pkt = 128;
+  let num = 1, off = 0, retries;
+  
+  log('Starting XModem transfer, waiting for receiver start signal (NAK or C)...', 'info');
+  
+  // 等待接收方发送启动信号（NAK或'C'）
+  let startSignalReceived = false;
+  const startTimeout = 10000; // 10秒超时
+  const startTime = Date.now();
+  
+  log('Waiting for receiver start signal (NAK or C)...', 'info');
+  while (!startSignalReceived && (Date.now() - startTime < startTimeout) && updating) {
+    try {
+      const { value, done } = await Promise.race([
+        reader.read(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+      ]);
+      if (done) break;
+      if (value) {
+        logRawData(value, '[XModem启动信号] ');
+        for (let i = 0; i < value.length; i++) {
+          if (value[i] === NAK || value[i] === 0x43) { // NAK (0x15) 或 'C' (0x43)
+            startSignalReceived = true;
+            log(`✓ Received XModem start signal: ${value[i] === NAK ? 'NAK' : 'C'}, starting transfer immediately...`, 'success');
+            break; // 立即退出循环，开始发送数据包
+          }
+        }
+      }
+    } catch (e) {
+      if (e.message !== 'timeout') {
+        log(`Error waiting for start signal: ${e.message}`, 'error');
+        break;
+      }
+    }
+    
+    if (startSignalReceived) {
+      break; // 收到启动信号后立即退出，开始发送数据包
+    }
+  }
+  
+  if (!startSignalReceived) {
+    throw new Error('XModem start signal (NAK or C) not received, cannot start transfer');
+  }
+  
+  log(`Starting data transfer, total length=${data.length} bytes, will be divided into ${Math.ceil(data.length / pkt)} packets`, 'info');
+  
+  while (off < data.length && updating) {
+    // 计算本次要发送的数据块
+    const remaining = data.length - off;
+    const chunkSize = Math.min(pkt, remaining);
+    const chunk = data.slice(off, off + chunkSize);
+    
+    // 创建128字节的填充数组，初始化为0x1A
+    const pad = new Uint8Array(pkt);
+    pad.fill(0x1A);
+    
+    // 复制实际数据到填充数组
+    pad.set(chunk, 0);
+    
+    // 验证数据包大小
+    if (pad.length !== 128) {
+      throw new Error(`数据包填充错误：期望128字节，实际${pad.length}字节`);
+    }
+    
+    // 验证数据是否正确填充
+    const actualDataBytes = pad.slice(0, chunkSize);
+    const paddingBytes = pad.slice(chunkSize);
+    if (!actualDataBytes.every((b, i) => b === chunk[i])) {
+      throw new Error(`数据复制错误`);
+    }
+    if (!paddingBytes.every(b => b === 0x1A)) {
+      throw new Error(`填充数据错误：应该全部是0x1A`);
+    }
+    
+    let ok = false;
+    retries = 10;
+    const expectedPacketNum = num; // 记录期望的包序号
+    while (retries-- && !ok && updating) {
+      // 验证包序号没有变化
+      if (num !== expectedPacketNum) {
+        throw new Error(`包序号错误：期望${expectedPacketNum}，实际${num}`);
+      }
+      
+      // 验证数据包长度
+      if (pad.length !== 128) {
+        throw new Error(`数据包长度错误：期望128字节，实际${pad.length}字节`);
+      }
+      
+      await writePacket(num, pad);
+      
+      // 等待ACK响应，最多等待2秒
+      // 必须收到ACK(0x06)才能继续，其他响应都需要重发
+      let ackReceived = false;
+      const ackWaitStartTime = Date.now();
+      const ackTimeout = 2000; // 2秒超时
+      
+      while (!ackReceived && (Date.now() - ackWaitStartTime < ackTimeout) && updating) {
+        try {
+          const { value, done } = await Promise.race([
+            reader.read(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+          ]);
+          if (done) {
+            // 串口读取结束，重发数据包
+            break; // 重发
+          }
+          if (value && value.length > 0) {
+            logRawData(value, '[XModem receive...] ');
+            for (let i = 0; i < value.length; i++) {
+              if (value[i] === ACK) {
+                // 0x06为正常ACK，必须收到ACK才能继续
+                ok = true;
+                ackReceived = true;
+                const progress = Math.min(100, Math.round((off + pkt) / data.length * 100));
+                updateProgress(progress);
+                log(`✓ Packet ${num} transferred successfully, received ACK (0x06) (${progress}%)`, 'success');
+                break; // 收到ACK，退出等待循环
+              } else if (value[i] === NAK) {
+                // 0x15为NAK，需要重发
+                log(`Received NAK (0x15), resending packet ${num}...`, 'info');
+                break; // 立即重发，退出等待循环
+              } else if (value[i] === CAN) {
+                // 0x18为CAN，传输被取消
+                throw new Error('收到CAN信号 (0x18)，传输被取消');
+              }
+              // 其他数据忽略，继续等待ACK
+            }
+            // 如果收到ACK，退出等待循环
+            if (ackReceived) {
+              break;
+            }
+            // 如果收到NAK，退出等待循环，准备重发
+            if (value.some(b => b === NAK)) {
+              break;
+            }
+            // 如果收到其他数据，继续等待ACK
+          }
+        } catch (e) {
+          if (e.message === 'timeout') {
+            // 500ms超时，继续等待（总超时时间是2秒）
+            continue;
+          } else if (e.message.includes('CAN')) {
+            throw e;
+          } else {
+            log(`Error waiting for ACK: ${e.message}, continuing to wait...`, 'error');
+          }
+        }
+      }
+      
+      // 如果2秒内没有收到ACK，标记为超时
+      if (!ackReceived && !ok) {
+        // 数据包等待ACK超时，重试
+      }
+      
+      // 如果收到NAK或超时，立即重试（不延迟）
+      // 只有在重试次数减少时才稍微延迟，避免过快重试
+      // if (!ok && retries > 0 && retries < 9) {
+      //   await new Promise(resolve => setTimeout(resolve, 100));
+      // }
+    }
+    
+    if (!ok) {
+      throw new Error(`数据包 ${num} 传输失败：未收到ACK(0x06)`);
+    }
+    if (!updating) {
+      throw new Error('用户取消');
+    }
+    
+    // 只有在收到ACK后才递增包序号和偏移
+    num++;
+    if (num > 255) num = 0; // 包序号循环（0-255）
+    off += pkt;
+    
+    // 检查是否还有数据要发送
+    // 如果已经是最后一包，立即退出循环，发送EOT
+    if (off >= data.length) {
+      break; // 退出循环，准备发送EOT
+    }
+  }
+  
+  // 所有数据包发送完成后，收到最后一包的ACK后，发送EOT信号
+  log('All packets sent, sending EOT signal...', 'info');
+  await sendEOT();
+}
+
+// 从流发送（GitHub在线文件）
+async function sendXModemFromStream(stream, totalSize) {
+  const pkt = 128;
+  let num = 1, retries;
+  const streamReader = stream.getReader();
+  let buffer = new Uint8Array(0);
+  let totalSent = 0;
+  
+  log('Starting XModem stream transfer, waiting for receiver start signal (NAK or C)...', 'info');
+  
+  // 等待接收方发送启动信号（NAK或'C'）
+  let startSignalReceived = false;
+  const startTimeout = 10000; // 10秒超时
+  const startTime = Date.now();
+  
+  // 先清空串口缓冲区，丢弃所有残留数据
+  log('Clearing serial port buffer...', 'info');
+  try {
+    while (true) {
+      const { value, done } = await Promise.race([
+        reader.read(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 100))
+      ]);
+      if (done) break;
+      if (value) {
+        logRawData(value, '[丢弃残留数据] ');
+      }
+    }
+  } catch (e) {
+    // 超时表示缓冲区已清空，继续
+  }
+  
+  log('Waiting for receiver start signal (NAK or C)...', 'info');
+  while (!startSignalReceived && (Date.now() - startTime < startTimeout) && updating) {
+    try {
+      const { value, done } = await Promise.race([
+        reader.read(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+      ]);
+      if (done) break;
+      if (value) {
+        logRawData(value, '[XModem启动信号] ');
+        for (let i = 0; i < value.length; i++) {
+          if (value[i] === NAK || value[i] === 0x43) { // NAK (0x15) 或 'C' (0x43)
+            startSignalReceived = true;
+            log(`✓ Received XModem start signal: ${value[i] === NAK ? 'NAK' : 'C'}, starting transfer immediately...`, 'success');
+            break; // 立即退出循环，开始发送数据包
+          }
+        }
+      }
+    } catch (e) {
+      if (e.message !== 'timeout') {
+        log(`Error waiting for start signal: ${e.message}`, 'error');
+        break;
+      }
+    }
+    
+    if (startSignalReceived) {
+      break; // 收到启动信号后立即退出，开始发送数据包
+    }
+  }
+  
+  if (!startSignalReceived) {
+    streamReader.releaseLock();
+    throw new Error('未收到XModem启动信号（NAK或C），无法开始传输');
+  }
+  
+  try {
+    while (updating) {
+      // 确保缓冲区有足够的数据
+      while (buffer.length < pkt) {
+        const { value, done } = await streamReader.read();
+        if (done) {
+          if (buffer.length === 0) break; // 文件结束
+          break;
+        }
+        if (value) {
+          // 合并到缓冲区
+          const newBuffer = new Uint8Array(buffer.length + value.length);
+          newBuffer.set(buffer);
+          newBuffer.set(value, buffer.length);
+          buffer = newBuffer;
+        }
+      }
+      
+      if (buffer.length === 0) break; // 没有更多数据
+      
+      // 取一个数据包
+      const chunk = buffer.slice(0, pkt);
+      const pad = new Uint8Array(pkt);
+      pad.set(chunk);
+      // 如果数据不足128字节，用0x1A填充剩余部分
+      if (chunk.length < pkt) {
+        pad.fill(0x1A, chunk.length, pkt);
+      }
+      
+      // 更新缓冲区
+      buffer = buffer.slice(pkt);
+      
+      let ok = false;
+      retries = 10;
+      while (retries-- && !ok && updating) {
+        await writePacket(num, pad);
+        
+        // 等待ACK，最多等待2秒
+        try {
+          const { value, done } = await Promise.race([
+            reader.read(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+          ]);
+          if (done) break;
+          if (value) {
+            logRawData(value, '[XModem receive...] ');
+            for (let i = 0; i < value.length; i++) {
+              if (value[i] === ACK) {
+                ok = true;
+                totalSent += pkt;
+                if (totalSize) {
+                  const progress = Math.min(100, Math.round(totalSent / totalSize * 100));
+                  updateProgress(progress);
+                }
+                break;
+              } else if (value[i] === NAK || value[i] === CAN) {
+                // 收到NAK或CAN，重试
+              }
+            }
+          }
+        } catch (e) {
+          if (e.message === 'timeout') {
+            // 数据包超时，重试
+          } else {
+            throw e;
+          }
+        }
+        
+        if (!ok && retries > 0) await delay(500);
+      }
+      
+      if (!ok) throw new Error(`数据包 ${num} 传输失败`);
+      if (!updating) throw new Error('用户取消');
+      
+      num++;
+      if (num > 255) num = 1; // 包序号循环
+      
+      // 检查是否还有数据要发送
+      // 如果缓冲区为空且流已结束，退出循环
+      if (buffer.length === 0) {
+        // 尝试读取更多数据
+        const { value, done } = await streamReader.read();
+        if (done) {
+          // 所有数据包已发送完成（流结束）
+          break; // 退出循环，准备发送EOT
+        }
+        if (value) {
+          // 还有数据，继续处理
+          const newBuffer = new Uint8Array(buffer.length + value.length);
+          newBuffer.set(buffer);
+          newBuffer.set(value, buffer.length);
+          buffer = newBuffer;
+        }
+      }
+    }
+  } finally {
+    streamReader.releaseLock();
+  }
+  
+  // 所有数据包发送完成后，收到最后一包的ACK后，发送EOT信号
+  // 正确的流程：发送完所有数据包 → 收到最后一包的ACK (0x06) → 发送EOT (0x04) → 设备返回ACK (0x06)
+  log('All packets sent, sending EOT signal...', 'info');
+  await sendEOT();
+}
+
+/* ========== 升级主流程 ========== */
+async function startUpdate() {
+  if (!port) return log('Serial port not connected', 'error');
+  if (!firmwareBytes && !githubFirmwareUrl) return log('Please select a firmware file first', 'error');
+  
+  // 检查reader和writer状态
+  if (!reader || !writer) {
+    log('Serial port reader/writer not ready, please reconnect serial port', 'error');
+    return;
+  }
+  
+  // 设置updating标志，这会阻止任何后台EZSP数据读取器
+  updating = true;
+  
+  // 确保reader可用（如果之前被释放，重新获取）
+  if (!port.readable) {
+    log('Serial port not readable, please reconnect serial port', 'error');
+    updating = false;
+    return;
+  }
+  
+  // 确保reader是干净的，如果reader被其他地方占用，先释放再重新获取
+  try {
+    if (reader) {
+      // 尝试取消并释放旧的reader
+      try {
+        await reader.cancel();
+        reader.releaseLock();
+      } catch (e) {
+        // 忽略错误，可能已经释放了
+      }
+    }
+    // 重新获取reader，确保是干净的
+    reader = port.readable.getReader();
+      log('Re-acquired serial port reader, ready to enter upgrade mode', 'info');
+  } catch (e) {
+      log(`Unable to get serial port reader: ${e.message}`, 'error');
+    updating = false;
+    return;
+  }
+  
+  document.getElementById('btnUpd').style.display = 'none';
+  document.getElementById('btnCan').style.display = 'inline-block';
+  document.getElementById('progBox').style.display = 'block';
+  const upgradeStatus = document.getElementById('upgradeStatus');
+  if (upgradeStatus) {
+    upgradeStatus.textContent = 'Upgrading...';
+    upgradeStatus.className = 'upgrade-status';
+  }
+  updateProgress(0);
+  
+  try {
+    // 步骤1: 进入升级模式（发送"1\r\n"，检测"upload gbl"）
+    log('Starting upgrade process...', 'info');
+    log(`Reader status: ${reader ? 'OK' : 'Not initialized'}, Writer status: ${writer ? 'OK' : 'Not initialized'}`, 'info');
+    
+    await enterUpgradeMode();
+    
+    // 步骤2: 立即开始传输文件（固件已在选择时下载到内存）
+    log('Device entered upgrade mode, starting file transfer...', 'success');
+    
+    // 检查固件数据是否已准备好（应该在选择时已下载）
+    if (!firmwareBytes) {
+      throw new Error('Firmware data not available. Please select a firmware file first.');
+    }
+    
+    log(`Starting transfer: ${firmwareFileName} (${firmwareBytes.length} bytes, ${(firmwareBytes.length / 1024).toFixed(2)} KB)`, 'info');
+    await sendXModem(firmwareBytes);
+    
+    updateProgress(100);
+    const upgradeStatus = document.getElementById('upgradeStatus');
+    if (upgradeStatus) {
+      upgradeStatus.textContent = 'Upgrade completed successfully';
+      upgradeStatus.className = 'upgrade-status success';
+    }
+    log('Upgrade successful!', 'success');
+  } catch (e) {
+    log('Upgrade failed: ' + e.message, 'error');
+    if (e.stack) {
+      log('Error stack: ' + e.stack.split('\n')[0], 'error');
+    }
+    updateProgress(0);
+  } finally {
+    updating = false;
+    document.getElementById('btnUpd').style.display = 'inline-block';
+    document.getElementById('btnCan').style.display = 'none';
+  }
+}
+
+function cancelUpdate() {
+  updating = false;
+  log('User cancelled upgrade', 'info');
+  document.getElementById('btnUpd').style.display = 'inline-block';
+  document.getElementById('btnCan').style.display = 'none';
+  document.getElementById('progBox').style.display = 'none';
+  const upgradeStatus = document.getElementById('upgradeStatus');
+  if (upgradeStatus) {
+    upgradeStatus.textContent = 'Ready to start upgrade';
+    upgradeStatus.className = 'upgrade-status';
+  }
+}
+
+/* ========== 初始化 ========== */
+window.onload = () => { 
+  loadVersions();
+  // 启动串口监听
+  startPortWatcher();
 };
-
-btnAutoBoot.onclick = async ()=>{
-  if(!port) return term('请先连接串口');
-  if(typeof port.setSignals !== 'function'){ return term('浏览器不支持 setSignals'); }
-  try{ term('尝试通过 RTS/DTR 进入 bootloader'); await port.setSignals({ dataTerminalReady:true, requestToSend:true }); await new Promise(r=>setTimeout(r,120)); await port.setSignals({ dataTerminalReady:false, requestToSend:false }); term('已发送信号，请手动重置设备'); }catch(e){ term('自动进入失败: '+e); }
+window.onbeforeunload = () => { 
+  if (port) {
+    disconnectPort();
+  }
 };
-
-// XMODEM implementation
-const SOH=0x01, STX=0x02, EOT=0x04, ACK=0x06, NAK=0x15, CAN=0x18, CRC_CHAR=0x43;
-function crc16(buf){ let crc=0; for(let i=0;i<buf.length;i++){ crc ^= (buf[i]<<8); for(let j=0;j<8;j++){ crc = (crc & 0x8000) ? ((crc<<1)^0x1021) : (crc<<1); crc &= 0xFFFF } } return crc & 0xFFFF }
-
-async function readByte(timeout=8000){ if(!reader) throw new Error('reader missing'); const p = reader.read(); const t = new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), timeout)); try{ const {value} = await Promise.race([p,t]); return value && value.length ? value[0] : null; }catch(e){ return null; } }
-
-async function waitInit(timeout=8000){ const start=Date.now(); while(Date.now()-start<timeout){ const b = await readChunk(2000); if(!b) continue; for(const x of b){ if(x===CRC_CHAR) return 'C'; if(x===NAK) return 'NAK'; } } return null }
-
-async function readChunk(timeout=5000){ if(!reader) return null; try{ const p = reader.read(); const t = new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), timeout)); const {value} = await Promise.race([p,t]); return value || null; }catch(e){ return null } }
-
-async function xmodemSend(bytes, onProgress){ if(!writer) throw new Error('writer missing'); const block = 1024; let offset=0; let blockNum=1; term('等待 bootloader 请求...'); // try to read initial 'C'
-  const init = await waitInit(8000); term('初始请求: '+ (init||'无'));
-  while(offset < bytes.length){ const chunk = bytes.slice(offset, offset+block); const data = new Uint8Array(block); data.fill(0x1A); data.set(chunk); const crc = crc16(data); const pkt = new Uint8Array(3+block+2); pkt[0]=STX; pkt[1]=blockNum&0xFF; pkt[2]=(~blockNum)&0xFF; pkt.set(data,3); pkt[pkt.length-2]=(crc>>8)&0xFF; pkt[pkt.length-1]=crc&0xFF; let ok=false; let tries=0; while(!ok && tries<8){ tries++; await writer.write(pkt); term('发送区块 '+blockNum+' 尝试 '+tries); const r = await readChunk(8000); const resp = r && r.length ? r[0] : null; if(resp===ACK){ ok=true; term('ACK'); } else if(resp===NAK){ term('NAK'); } else if(resp===CAN){ throw new Error('CAN 收到'); } else term('未知响应:'+resp); }
-    if(!ok) throw new Error('区块失败'); offset += block; blockNum = (blockNum % 255) + 1; if(onProgress) onProgress(Math.round(offset/bytes.length*100)); }
-  // EOT
-  for(let i=0;i<6;i++){ await writer.write(new Uint8Array([EOT])); const r = await readChunk(5000); if(r && r[0]===ACK){ term('EOT 被确认'); return; } }
-  throw new Error('EOT 未确认'); }
-
-async function getFirmware(){ const url = fwUrlInput.value.trim(); if(url){ term('下载: '+url); const r = await fetch(url); if(!r.ok) throw new Error('下载失败 '+r.status); const ab = await r.arrayBuffer(); return new Uint8Array(ab); } const f = fwFileInput.files[0]; if(f){ term('读取本地: '+f.name); const ab = await f.arrayBuffer(); return new Uint8Array(ab); } throw new Error('未选择固件'); }
-
-btnFlash.onclick = async ()=>{
-  btnFlash.disabled = true; progress.value = 0; try{ const bytes = await getFirmware(); term('固件字节: '+bytes.length); await xmodemSend(bytes, p=>progress.value=p); term('传输完成，等待设备写入...'); }catch(e){ term('刷机失败: '+e); } btnFlash.disabled=false; }
-
-// init
-fetchList();
-
 </script>
 </body>
 </html>
