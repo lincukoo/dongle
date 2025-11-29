@@ -98,10 +98,7 @@ input[type=checkbox]{margin-right:5px;cursor:pointer}
     <div class="section-title">Select Firmware</div>
     <div style="margin-top:12px">
       <label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="verList" style="flex:1"><option value="">Please put the device into bootloader mode first</option></select>
-          <button type="button" id="btnRefresh" onclick="loadVersions()" style="background:#2196f3;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">Refresh</button>
-        </div>
+        <select id="verList" style="width:100%"><option value="">Please put the device into bootloader mode first</option></select>
       </label>
     </div>
   </div>
@@ -488,8 +485,8 @@ function updateFirmwareStatus(state) {
     sel.style.background = '';
     sel.style.borderColor = '';
   } else if (state === 'failed') {
-    // 状态3: Failed to Load firmware list, please click refresh button
-    sel.innerHTML = '<option value="">Failed to Load firmware list, please click refresh button</option>';
+    // 状态3: Failed to load firmware list, please  refresh the webpage
+    sel.innerHTML = '<option value="">Failed to load firmware list, please  refresh the webpage.</option>';
     sel.disabled = false;
     // 设置下拉框为粉红色背景（失败状态）
     sel.style.background = '#fce4ec';
@@ -529,7 +526,6 @@ async function loadVersions() {
   const sel = document.getElementById('verList');
   sel.innerHTML = '<option value="">Loading...</option>';
   sel.disabled = true;
-  document.getElementById('btnRefresh').disabled = true;
   
   const GITHUB_API = `${GITHUB_REPO_BASE}/${selectedChip}`;
   
@@ -580,7 +576,6 @@ async function loadVersions() {
       sel.innerHTML = '<option value="">No firmware files</option>';
       updateFirmwareStatus('failed');
       sel.disabled = false;
-      document.getElementById('btnRefresh').disabled = false;
       return;
     }
     
@@ -604,7 +599,6 @@ async function loadVersions() {
       sel.appendChild(opt);
     });
     sel.disabled = false;
-    document.getElementById('btnRefresh').disabled = false;
     
     // 状态2: Please select version
     updateFirmwareStatus('ready');
@@ -617,7 +611,6 @@ async function loadVersions() {
     }
     sel.innerHTML = '<option value="">Load failed</option>';
     sel.disabled = false;
-    document.getElementById('btnRefresh').disabled = false;
     firmwareFiles = [];
     // 状态3: Failed to Load firmware list
     updateFirmwareStatus('failed');
