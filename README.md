@@ -1,8 +1,8 @@
-# Lincukoo USB-Dongle OTA Update Tool
+# Lincukoo USB-Dongle Firmware upgrade Tool
 
-**Firmware Repository**: [https://github.com/lincukoo/USB-Dongle/tree/main/firmware](https://github.com/lincukoo/USB-Dongle/tree/main/firmware)
-
-A web-based Over-The-Air (OTA) firmware update tool for Lincukoo USB-Dongle devices. This tool allows you to upgrade device firmware directly from your web browser using the Web Serial API.
+**Firmware Repository**: [https://github.com/lincukoo/dongle/tree/main/firmware]
+**USB-Dongle Firmware upgrade Tool**: [https://lincukoo.github.io/dongle/]
+A web-based firmware upgrade tool for Lincukoo USB-Dongle devices. This tool allows you to upgrade device firmware directly from your web browser using the Web Serial API.
 
 ## Features
 
@@ -10,7 +10,7 @@ A web-based Over-The-Air (OTA) firmware update tool for Lincukoo USB-Dongle devi
 - **Serial Port Connection**: Direct communication with USB-Dongle via serial port
 - **Firmware Selection**: 
   - Download firmware from GitHub repository
-  - Select local firmware files (.gbl or .bin)
+  - Select local firmware files (.gbl)
   - Auto-select latest firmware version
 - **Real-time Progress**: Visual progress bar and detailed status logs
 - **XModem Protocol**: Reliable firmware transfer using XModem protocol
@@ -34,15 +34,13 @@ A web-based Over-The-Air (OTA) firmware update tool for Lincukoo USB-Dongle devi
 
 ### Driver Installation
 
-**For Windows/macOS users**: Install the Silicon Labs CP2102 Driver to enable device detection.
-
-- Download from: [Silicon Labs CP210x Driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
+**For Windows/macOS users**: Install the Silicon Labs CH340 Driver to enable device detection.
 
 ## Quick Start
 
 ### 1. Open the Tool
 
-Simply open `index(1).html` in your web browser (Chrome/Edge recommended).
+Simply open `index.html` in your web browser (Chrome/Edge recommended).
 
 ### 2. Connect Your Device
 
@@ -53,17 +51,12 @@ Simply open `index(1).html` in your web browser (Chrome/Edge recommended).
 
 ### 3. Select Firmware
 
-You have two options:
 
-#### Option A: Download from GitHub
+#### Download from GitHub
 1. Click **"Refresh"** to load the latest firmware list from GitHub
 2. Select a firmware version from the dropdown
 3. The firmware will be automatically downloaded
-4. Or click **"Latest"** to automatically select and download the latest version
 
-#### Option B: Use Local File
-1. Click **"Choose File"** under "Select local firmware file"
-2. Select a `.gbl` or `.bin` firmware file from your computer
 
 ### 4. Start Upgrade
 
@@ -93,21 +86,6 @@ Click the **"Disconnect"** button to release the serial port when finished.
    - Green box: Port connected successfully
    - Red box: No port connected (with troubleshooting tips)
 
-### Firmware Selection
-
-#### GitHub Firmware
-
-- **Repository**: [lincukoo/USB-Dongle/tree/main/firmware](https://github.com/lincukoo/USB-Dongle/tree/main/firmware)
-- **Supported Formats**: `.gbl`, `.bin`
-- **Refresh Button**: Reloads the firmware list from GitHub
-- **Latest Button**: Automatically selects the newest firmware version
-- **Auto-download**: Firmware is downloaded immediately upon selection
-
-#### Local Firmware
-
-- **Supported Formats**: `.gbl`, `.bin`
-- **File Size**: Displayed after selection
-- **Validation**: File is loaded into memory before upgrade starts
 
 ### Upgrade Process
 
@@ -145,7 +123,7 @@ The status log shows:
    - Try a different USB cable
 
 2. **Check Drivers**:
-   - Verify CP2102 driver is installed (Windows/macOS)
+   - Verify CH340 driver is installed (Windows/macOS)
    - Check Device Manager (Windows) or System Information (macOS)
    - Reinstall driver if necessary
 
@@ -163,7 +141,7 @@ The status log shows:
 
 1. **Check Firmware File**:
    - Verify file is not corrupted
-   - Ensure file format is `.gbl` or `.bin`
+   - Ensure file format is `.gbl`
    - Try downloading again from GitHub
 
 2. **Check Connection**:
@@ -216,7 +194,7 @@ The status log shows:
 
 ### Firmware Format
 
-- **Supported**: `.gbl` (Gecko Bootloader) and `.bin` (Binary)
+- **Supported**: `.gbl` (Gecko Bootloader)
 - **Source**: GitHub repository or local files
 - **Download**: Automatic download on selection (GitHub)
 
@@ -244,9 +222,8 @@ This tool is provided as-is for use with Lincukoo USB-Dongle devices.
 
 ## Version History
 
-- Current version supports OTA upgrade via XModem protocol
+- Current version supports firmware upgrade via XModem protocol
 - GitHub firmware integration
-- Local file support
 - Real-time progress tracking
 - Enhanced error handling
 
