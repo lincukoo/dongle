@@ -95,9 +95,10 @@ input[type=checkbox]{margin-right:5px;cursor:pointer}
 
   <!-- Select the firmware -->
   <div class="section">
-    <div style="margin-bottom:15px">
-      <label><strong>Download and select firmware from GitHub repository</strong>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+    <div class="section-title">Select firmware from GitHub repository</div>
+    <div style="margin-top:12px">
+      <label>
+        <div style="display:flex;gap:8px;align-items:center">
           <select id="verList" style="flex:1"><option value="">Please select chip model first</option></select>
           <button type="button" id="btnRefresh" onclick="loadVersions()" style="background:#2196f3;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">Refresh</button>
         </div>
@@ -455,7 +456,7 @@ function handleFlashClick(event) {
   // 如果条件不满足，显示原因并返回
   if (!conditions.canUpgrade) {
     log(`Flash button clicked but conditions not met: ${conditions.errorMessage}`, 'warning');
-    alert(conditions.errorMessage);
+    // 不显示状态，因为这是升级条件检查，不是固件列表加载状态
     return;
   }
   
@@ -465,34 +466,39 @@ function handleFlashClick(event) {
 }
 
 
-// 更新固件下载状态显示
-function updateFirmwareStatus(text, showProgress = false, progress = 0, message = '') {
-  const statusBox = document.getElementById('firmwareStatus');
-  const statusText = document.getElementById('firmwareStatusText');
-  const progressContainer = document.getElementById('firmwareProgressContainer');
-  const progressBar = document.getElementById('firmwareProgBar');
-  const progressText = document.getElementById('firmwareProgText');
-  const statusMessage = document.getElementById('firmwareStatusMessage');
+// 更新固件下载状态显示（在下拉框中动态显示3种状态）
+function updateFirmwareStatus(state) {
+  const sel = document.getElementById('verList');
+  if (!sel) return;
   
-  if (statusBox) {
-    statusBox.style.display = 'block';
-    if (text.includes('Success') || text.includes('success')) {
-      statusBox.style.background = '#e8f5e9';
-      statusBox.style.borderColor = '#4caf50';
-    } else if (text.includes('Failed') || text.includes('failed') || text.includes('Error')) {
-      statusBox.style.background = '#ffebee';
-      statusBox.style.borderColor = '#f44336';
+  if (state === 'loading') {
+    // 状态1: Loading firmware list...
+    sel.innerHTML = '<option value="">Loading firmware list...</option>';
+    sel.disabled = true;
+    sel.style.background = '';
+    sel.style.borderColor = '';
+  } else if (state === 'ready') {
+    // 状态2: Please select version（只更新第一个选项的文本，保留其他选项）
+    if (sel.options.length > 0) {
+      sel.options[0].textContent = 'Please select version';
     } else {
-      statusBox.style.background = '#f5f5f5';
-      statusBox.style.borderColor = '#ddd';
+      sel.innerHTML = '<option value="">Please select version</option>';
     }
+    sel.disabled = false;
+    sel.style.background = '';
+    sel.style.borderColor = '';
+  } else if (state === 'failed') {
+    // 状态3: Failed to Load firmware list, please click refresh button
+    sel.innerHTML = '<option value="">Failed to Load firmware list, please click refresh button</option>';
+    sel.disabled = false;
+    // 设置下拉框为粉红色背景（失败状态）
+    sel.style.background = '#fce4ec';
+    sel.style.borderColor = '#f48fb1';
+  } else {
+    // 其他状态，恢复默认样式
+    sel.style.background = '';
+    sel.style.borderColor = '';
   }
-  
-  if (statusText) statusText.textContent = text;
-  if (progressContainer) progressContainer.style.display = showProgress ? 'block' : 'none';
-  if (progressBar) progressBar.style.width = progress + '%';
-  if (progressText) progressText.textContent = progress + '%';
-  if (statusMessage) statusMessage.textContent = message;
 }
 
 // 更新芯片选择（用于自动检测）
@@ -508,10 +514,6 @@ function updateChipSelectionUI(chip) {
   firmwareFileName = '';
   githubFirmwareUrl = null;
   
-  // 隐藏固件状态栏
-  const firmwareStatus = document.getElementById('firmwareStatus');
-  if (firmwareStatus) firmwareStatus.style.display = 'none';
-  
   log(`Auto-detected chip: ${chip}`, 'info');
 }
 
@@ -520,7 +522,7 @@ let firmwareFiles = []; // 存储固件列表数据
 
 async function loadVersions() {
   if (currentState == 'ready') {
-    alert('Error: Device is not in bootloader mode. Please reconnect the device and ensure it enters bootloader mode.');
+    updateFirmwareStatus('failed');
     return;
   }
   
@@ -531,8 +533,8 @@ async function loadVersions() {
   
   const GITHUB_API = `${GITHUB_REPO_BASE}/${selectedChip}`;
   
-  // 显示加载状态
-  updateFirmwareStatus('Loading firmware list...', false, 0, '');
+  // 状态1: Loading firmware list...
+  updateFirmwareStatus('loading');
   
   try {
     log(`Fetching firmware list from: ${GITHUB_API}`, 'info');
@@ -553,7 +555,7 @@ async function loadVersions() {
     const data = await r.json();
     log(`GitHub API response received, type: ${typeof data}, isArray: ${Array.isArray(data)}`, 'info');
     
-    // 检查响应格式（参考ref实现）
+    // 检查响应格式
     if (!Array.isArray(data)) {
       log(`Invalid GitHub API response format: expected array, got ${typeof data}. Response: ${JSON.stringify(data).substring(0, 200)}`, 'error');
       throw new Error('Invalid response format: expected array');
@@ -561,7 +563,7 @@ async function loadVersions() {
     
     log(`Found ${data.length} items in GitHub repository`, 'info');
     
-    // 过滤并排序固件文件（参考ref实现）
+    // 过滤并排序固件文件
     firmwareFiles = data.filter(f => f.name && (f.name.endsWith('.gbl') || f.name.endsWith('.bin')))
       .map(f => ({
         name: f.name,
@@ -576,9 +578,21 @@ async function loadVersions() {
     if (firmwareFiles.length === 0) {
       log('No firmware files found in GitHub repository', 'warning');
       sel.innerHTML = '<option value="">No firmware files</option>';
+      updateFirmwareStatus('failed');
+      sel.disabled = false;
+      document.getElementById('btnRefresh').disabled = false;
       return;
     }
     
+    // 点击refresh时，强制从GitHub重新下载，不使用缓存
+    firmwareCache = {}; // 清空缓存，强制重新下载
+    
+    // 自动下载所有固件文件
+    log(`Starting to download all ${firmwareFiles.length} firmware files from GitHub...`, 'info');
+    currentState = 'downloading';
+    await downloadAllFirmwareFiles();
+    
+    // 下载完成后，更新下拉框和状态
     sel.innerHTML = '<option value="">Please select version</option>';
     firmwareFiles.forEach(f => {
       const opt = document.createElement('option');
@@ -586,49 +600,16 @@ async function loadVersions() {
       const sizeText = f.size ? ` (${(f.size / 1024).toFixed(1)} KB)` : '';
       opt.textContent = f.name + sizeText;
       opt.dataset.size = f.size;
-      opt.dataset.name = f.name; // 存储原始文件名，方便后续使用
+      opt.dataset.name = f.name;
       sel.appendChild(opt);
     });
     sel.disabled = false;
     document.getElementById('btnRefresh').disabled = false;
     
-    log(`Firmware list loaded successfully: ${firmwareFiles.length} files`, 'success');
+    // 状态2: Please select version
+    updateFirmwareStatus('ready');
+    currentState = 'download_success';
     
-    // 检查localStorage中是否有匹配的固件缓存
-    const cachedFirmware = loadFirmwareCacheFromStorage(selectedChip);
-    if (cachedFirmware && Object.keys(cachedFirmware).length > 0) {
-      // 检查缓存中的固件是否都在当前固件列表中
-      let allCached = true;
-      for (const file of firmwareFiles) {
-        if (!cachedFirmware[file.name]) {
-          allCached = false;
-          break;
-        }
-      }
-      
-      if (allCached && firmwareFiles.length === Object.keys(cachedFirmware).length) {
-        // 所有固件都在缓存中，直接使用缓存
-        log(`All firmware files found in localStorage cache, using cached data (${Object.keys(cachedFirmware).length} files)`, 'success');
-        firmwareCache = cachedFirmware;
-        currentState = 'download_success';
-        updateFirmwareStatus(`Firmware download completed successfully`, false, 100, 'Please select a firmware version to flash');
-        return; // 不需要下载
-      } else {
-        // 部分固件在缓存中，合并缓存和下载缺失的
-        log(`Partial firmware cache found (${Object.keys(cachedFirmware).length} files), will download missing files`, 'info');
-        firmwareCache = cachedFirmware; // 先使用缓存
-      }
-    } else {
-      // 没有缓存，清空缓存准备下载
-      firmwareCache = {};
-    }
-    
-    updateFirmwareStatus(`Firmware list loaded successfully: ${firmwareFiles.length} files`, true, 0, 'Downloading all firmware files...');
-    currentState = 'downloading';
-    
-    // 自动下载所有固件文件（如果缓存中没有）
-    log(`Starting to download all ${firmwareFiles.length} firmware files...`, 'info');
-    await downloadAllFirmwareFiles();
   } catch (e) {
     log(`Failed to load GitHub firmware list: ${e.message}`, 'error');
     if (e.stack) {
@@ -638,57 +619,36 @@ async function loadVersions() {
     sel.disabled = false;
     document.getElementById('btnRefresh').disabled = false;
     firmwareFiles = [];
-    updateFirmwareStatus(`Failed to load firmware list: ${e.message}`, false, 0, 'Please click Refresh to retry');
+    // 状态3: Failed to Load firmware list
+    updateFirmwareStatus('failed');
     currentState = 'download_failed';
   }
 }
 
-// 下载所有固件文件到缓存
+// 下载所有固件文件到缓存（强制从GitHub重新下载）
 async function downloadAllFirmwareFiles() {
   if (firmwareFiles.length === 0) {
     log('No firmware files to download', 'warning');
     return;
   }
   
-  // 不清空缓存，只下载缺失的文件
+  // 强制下载所有文件，不使用缓存
   let successCount = 0;
   let failCount = 0;
-  let skippedCount = 0;
   const totalFiles = firmwareFiles.length;
-  const filesToDownload = [];
   
-  // 找出需要下载的文件（缓存中不存在的）
-  for (const file of firmwareFiles) {
-    if (firmwareCache[file.name]) {
-      skippedCount++;
-      log(`Skipping ${file.name} (already in cache)`, 'info');
-    } else {
-      filesToDownload.push(file);
-    }
-  }
+  log(`Downloading all ${totalFiles} firmware files from GitHub...`, 'info');
   
-  if (filesToDownload.length === 0) {
-    log(`All firmware files already in cache (${skippedCount} files), skipping download`, 'success');
-    currentState = 'download_success';
-    updateFirmwareStatus(`Firmware download completed successfully`, false, 100, `Please select a firmware version to flash`);
-    return;
-  }
-  
-  log(`Downloading ${filesToDownload.length} missing firmware files (${skippedCount} already in cache)...`, 'info');
-  
-  for (let i = 0; i < filesToDownload.length; i++) {
-    const file = filesToDownload[i];
+  for (let i = 0; i < firmwareFiles.length; i++) {
+    const file = firmwareFiles[i];
     const fileSizeKB = file.size ? (parseInt(file.size) / 1024).toFixed(2) : 'unknown';
     
-    log(`Downloading firmware ${i + 1}/${filesToDownload.length}: ${file.name} (${fileSizeKB} KB)...`, 'info');
-    updateFirmwareStatus(`Downloading firmware ${i + 1}/${filesToDownload.length}: ${file.name}`, true, Math.round((i / filesToDownload.length) * 100), `Progress: ${i}/${filesToDownload.length} files`);
+    log(`Downloading firmware ${i + 1}/${totalFiles}: ${file.name} (${fileSizeKB} KB)...`, 'info');
     
     try {
       const response = await fetch(file.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
       const reader = response.body.getReader();
       const chunks = [];
       let receivedLength = 0;
@@ -720,29 +680,23 @@ async function downloadAllFirmwareFiles() {
     }
   }
   
-  // 更新状态
-  if (successCount > 0 || skippedCount > 0) {
-    currentState = 'download_success';
-    const totalCached = successCount + skippedCount;
-    log(`Firmware download completed: ${successCount} downloaded, ${skippedCount} from cache, ${failCount} failed`, 'success');
+  // 下载完成后，更新缓存到localStorage
+  if (successCount > 0) {
+    log(`Firmware download completed: ${successCount} downloaded, ${failCount} failed`, 'success');
     log(`Cache status: ${Object.keys(firmwareCache).length} files stored in cache: ${Object.keys(firmwareCache).join(', ')}`, 'success');
     
-    // 保存固件缓存到localStorage（即使没有升级，也保存下载的固件）
+    // 保存固件缓存到localStorage
     if (selectedChip && firmwareCache && Object.keys(firmwareCache).length > 0) {
       log('Saving firmware cache to localStorage...', 'info');
       saveFirmwareCacheToStorage(selectedChip, firmwareCache);
       lastChipModel = selectedChip; // 更新芯片型号
     }
-    
-    if (failCount > 0) {
-      updateFirmwareStatus(`Firmware download completed with ${failCount} failed`, false, 100, `Please select a firmware version to flash`);
-    } else {
-      updateFirmwareStatus(`Firmware download completed successfully`, false, 100, `Please select a firmware version to flash`);
-    }
-  } else {
-    currentState = 'download_failed';
-    log(`Failed to download all firmware files`, 'error');
-    updateFirmwareStatus(`Failed to download all firmware files`, false, 0, 'Please click Refresh to retry');
+  }
+  
+  if (failCount > 0 && successCount === 0) {
+    // 所有下载都失败
+    log(`All firmware downloads failed`, 'error');
+    throw new Error('Failed to download firmware files');
   }
 }
 
@@ -788,7 +742,7 @@ document.getElementById('verList').addEventListener('change', async e => {
     log(`✓ Firmware loaded from cache: ${fileName} (${firmwareBytes.length} bytes, ${fileSizeKB.toFixed(2)} KB)`, 'success');
     log(`✓ Firmware data is ready for flashing. firmwareBytes exists: ${!!firmwareBytes}, length: ${firmwareBytes.length}`, 'success');
     log(`✓ Cache status: ${Object.keys(firmwareCache).length} files in cache`, 'info');
-    updateFirmwareStatus(`Firmware selected: ${fileName}`, false, 100, `Size: ${fileSizeKB.toFixed(2)} KB - Ready to flash`);
+    // 选择固件后，保持 ready 状态
     currentState = 'download_success';
   } else {
     log(`✗ Firmware not found in cache: ${fileName}`, 'error');
@@ -796,7 +750,7 @@ document.getElementById('verList').addEventListener('change', async e => {
     firmwareBytes = null;
     firmwareFileName = '';
     githubFirmwareUrl = null;
-    updateFirmwareStatus(`Firmware not found in cache: ${fileName}`, false, 0, 'Please click Refresh to reload firmware files');
+    updateFirmwareStatus('failed');
     currentState = 'download_failed';
   }
 });
@@ -850,12 +804,6 @@ async function connectPort() {
   if (verList) {
     verList.innerHTML = '<option value="">Please wait for chip detection...</option>';
     verList.disabled = true;
-  }
-  
-  // 隐藏固件状态栏
-  const firmwareStatus = document.getElementById('firmwareStatus');
-  if (firmwareStatus) {
-    firmwareStatus.style.display = 'none';
   }
   
   // 更新Flash按钮状态
@@ -1031,12 +979,6 @@ async function handlePortDisconnect() {
     verList.disabled = false;
   }
   
-  // 隐藏固件状态栏
-  const firmwareStatus = document.getElementById('firmwareStatus');
-  if (firmwareStatus) {
-    firmwareStatus.style.display = 'none';
-  }
-  
   
   log('Serial port connection cleared, please reconnect', 'warning');
 }
@@ -1123,12 +1065,6 @@ async function disconnectPort() {
   if (verList) {
     verList.innerHTML = '<option value="">Please select chip model first</option>';
     verList.disabled = false;
-  }
-  
-  // 隐藏固件状态栏
-  const firmwareStatus = document.getElementById('firmwareStatus');
-  if (firmwareStatus) {
-    firmwareStatus.style.display = 'none';
   }
   
 }
@@ -2008,9 +1944,9 @@ async function startUpdate() {
   
   // 检查串口连接
   if (!port) {
-    const errorMsg = 'Error: Serial port not connected. Please connect the device first.';
+    const errorMsg = 'Error: Serial port not connected';
     log(errorMsg, 'error');
-    alert(errorMsg);
+    // 不显示状态，因为这是升级条件检查，不是固件列表加载状态
     return;
   }
   
@@ -2018,7 +1954,7 @@ async function startUpdate() {
   const conditions = checkUpgradeConditions();
   if (!conditions.canUpgrade) {
     log(conditions.errorMessage, 'error');
-    alert(conditions.errorMessage);
+    // 不显示状态，因为这是升级条件检查，不是固件列表加载状态
     return;
   }
   
@@ -2030,11 +1966,11 @@ async function startUpdate() {
       firmwareBytes = firmwareCache[firmwareFileName];
       log(`Firmware reloaded from cache: ${firmwareFileName} (${firmwareBytes.length} bytes)`, 'success');
     } else {
-      const errorMsg = 'Error: Firmware data not available. Please select a firmware version from the list first.';
+      const errorMsg = 'Error: Firmware data not available';
       log(errorMsg, 'error');
       log(`Debug info: firmwareFileName=${firmwareFileName || 'empty'}, firmwareBytes=${firmwareBytes ? firmwareBytes.length + ' bytes' : 'null'}, currentState=${currentState}`, 'error');
       log(`Debug info: firmwareCache keys: ${Object.keys(firmwareCache).join(', ') || 'empty'}`, 'error');
-      alert(errorMsg);
+      // 不显示状态，因为这是升级条件检查，不是固件列表加载状态
       return;
     }
   }
